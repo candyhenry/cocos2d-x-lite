@@ -359,13 +359,23 @@ void Sprite::setTexture(Texture2D *texture)
         if (texture == nullptr)
         {
             Image* image = new (std::nothrow) Image();
-            bool isOK = image->initWithRawData(cc_2x2_white_image, sizeof(cc_2x2_white_image), 2, 2, 8);
-            CC_UNUSED_PARAM(isOK);
-            CCASSERT(isOK, "The 2x2 empty texture was created unsuccessfully.");
-
-            texture = _director->getTextureCache()->addImage(image, CC_2x2_WHITE_IMAGE_KEY);
-            CC_SAFE_RELEASE(image);
+            if(image)
+            {
+                bool isOK = image->initWithRawData(cc_2x2_white_image, sizeof(cc_2x2_white_image), 2, 2, 8);
+                CCASSERT(isOK, "The 2x2 empty texture was created unsuccessfully.");
+                if (isOK)
+                    texture = _director->getTextureCache()->addImage(image, CC_2x2_WHITE_IMAGE_KEY);
+                
+                image->release();
+            }
         }
+    }
+    
+    CCASSERT(texture, "texture should not nullptr!");
+    if(texture == nullptr)
+    {
+        log("Sprite::setTexture error:texture should not nullptr!");
+        return;
     }
 
     if (!_batchNode && _texture != texture)
@@ -620,11 +630,13 @@ void Sprite::draw(Renderer *renderer, const Mat4 &transform, uint32_t flags)
     if(_insideBounds)
 #endif
     {
-        if (_texture == nullptr) {
+        CCASSERT(_glProgramState, "Sprite::draw error: _glProgramState should not null");
+        if (_texture == nullptr || _glProgramState == nullptr)
+        {
             return;
         }
 
-        _trianglesCommand.init(_globalZOrder, _texture->getName(), getGLProgramState(), _blendFunc, _polyInfo.triangles, transform, flags);
+        _trianglesCommand.init(_globalZOrder, _texture->getName(), _glProgramState, _blendFunc, _polyInfo.triangles, transform, flags);
         renderer->addCommand(&_trianglesCommand);
 
 #if CC_SPRITE_DEBUG_DRAW

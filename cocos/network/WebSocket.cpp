@@ -552,7 +552,7 @@ void WebSocket::onSubThreadStarted()
         {
             "permessage-deflate",
             lws_extension_callback_pm_deflate,
-            "permessage-deflate; client_no_context_takeover; client_max_window_bits"
+            "permessage-deflate; client_max_window_bits"
         },
         {
             "deflate-frame",
@@ -600,12 +600,11 @@ void WebSocket::onSubThreadStarted()
             if (_wsProtocols[i+1].callback != nullptr) name += ", ";
         }
 
-        char portStr[10];
-        sprintf(portStr, "%d", _port);
-        std::string ads_port = _host + ":" + portStr;
+        char ads_port[50];
+        sprintf(ads_port, "%s:%d", _host.c_str(), _port);
         
         lws_client_connect_info cInfo = {_wsContext, _host.c_str(), (int)_port, _SSLConnection,
-                                      _path.c_str(), ads_port.c_str(), ads_port.c_str(),
+                                      _path.c_str(), ads_port, _host.c_str(),
             name.c_str(), -1,nullptr,nullptr};
         _wsInstance = lws_client_connect_via_info(&cInfo);
 

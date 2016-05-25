@@ -167,7 +167,7 @@ Tex2F ProgressTimer::textureCoordFromAlphaPoint(Vec2 alpha)
     return Tex2F(min.x * (1.f - alpha.x) + max.x * alpha.x, min.y * (1.f - alpha.y) + max.y * alpha.y);
 }
 
-Vec2 ProgressTimer::vertexFromAlphaPoint(Vec2 alpha)
+Vec2 ProgressTimer::vertexFromAlphaPoint(const Vec2& alpha)
 {
     Vec2 ret(0.0f, 0.0f);
     if (!_sprite) {
@@ -541,7 +541,7 @@ void ProgressTimer::draw(Renderer *renderer, const Mat4 &transform, uint32_t fla
     if( ! _vertexData || ! _sprite)
         return;
 
-    _customCommand.init(_globalZOrder, transform, flags);
+    _customCommand.init(_globalZOrder);
     _customCommand.func = CC_CALLBACK_0(ProgressTimer::onDraw, this, transform, flags);
     renderer->addCommand(&_customCommand);
 }

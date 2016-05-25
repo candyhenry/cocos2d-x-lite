@@ -367,7 +367,7 @@ void Sequence::update(float t)
             new_t = (t-_split) / (1 - _split );
     }
 
-    if ( found==1 )
+    if (found == 1)
     {
         if( _last == -1 )
         {
@@ -1067,7 +1067,7 @@ MoveBy* MoveBy::reverse() const
 }
 
 
-void MoveBy::update(float t)
+void MoveBy::update(float dt)
 {
     if (_target)
     {
@@ -1075,9 +1075,11 @@ void MoveBy::update(float t)
         auto currentPos = _target->getPosition();
         auto diff = currentPos - _previousPosition;
         _startPosition = _startPosition + diff;
-        auto newPos =  _startPosition + (_positionDelta * t);
-        _target->setPosition(newPos);
-        _previousPosition = newPos;
+        
+        _previousPosition.x = _startPosition.x + _positionDelta.x * dt;
+        _previousPosition.y = _startPosition.y + _positionDelta.y * dt;
+        
+        _target->setPosition(_previousPosition);
 #else
         _target->setPosition(_startPosition + _positionDelta * t);
 #endif // CC_ENABLE_STACKABLE_ACTIONS
@@ -1355,15 +1357,14 @@ void JumpBy::update(float t)
 
         float x = _delta.x * t;
 #if CC_ENABLE_STACKABLE_ACTIONS
-        Vec2 currentPos = _target->getPosition();
+        auto currentPos = _target->getPosition();
 
         Vec2 diff = currentPos - _previousPos;
         _startPosition = diff + _startPosition;
 
-        Vec2 newPos = _startPosition + Vec2(x,y);
-        _target->setPosition(newPos);
-
-        _previousPos = newPos;
+        _previousPos.x = _startPosition.x + x;
+        _previousPos.y = _startPosition.y + y;
+        _target->setPosition(_previousPos);
 #else
         _target->setPosition(_startPosition + Vec2(x,y));
 #endif // !CC_ENABLE_STACKABLE_ACTIONS
@@ -1502,14 +1503,13 @@ void BezierBy::update(float time)
         float y = bezierat(ya, yb, yc, yd, time);
 
 #if CC_ENABLE_STACKABLE_ACTIONS
-        Vec2 currentPos = _target->getPosition();
+        auto currentPos = _target->getPosition();
         Vec2 diff = currentPos - _previousPosition;
         _startPosition = _startPosition + diff;
 
-        Vec2 newPos = _startPosition + Vec2(x,y);
-        _target->setPosition(newPos);
-
-        _previousPosition = newPos;
+        _previousPosition.x = _startPosition.x + x;
+        _previousPosition.y = _startPosition.y + y;
+        _target->setPosition(_previousPosition);
 #else
         _target->setPosition( _startPosition + Vec2(x,y));
 #endif // !CC_ENABLE_STACKABLE_ACTIONS
@@ -1981,7 +1981,6 @@ void FadeTo::update(float time)
     {
         _target->setOpacity((GLubyte)(_fromOpacity + (_toOpacity - _fromOpacity) * time));
     }
-    /*_target->setOpacity((GLubyte)(_fromOpacity + (_toOpacity - _fromOpacity) * time));*/
 }
 
 //
@@ -2377,7 +2376,9 @@ void Animate::update(float t)
             _currFrameIndex = i;
             AnimationFrame* frame = frames.at(_currFrameIndex);
             frameToDisplay = frame->getSpriteFrame();
-            static_cast<Sprite*>(_target)->setSpriteFrame(frameToDisplay);
+            CCASSERT(_target, "Animate::update error: _target should not null");
+            if(_target)
+                static_cast<Sprite*>(_target)->setSpriteFrame(frameToDisplay);
 
             const ValueMap& dict = frame->getUserInfo();
             if ( !dict.empty() )
@@ -2548,10 +2549,9 @@ void ActionFloat::startWithTarget(Node *target)
 
 void ActionFloat::update(float delta)
 {
-    float value = _to - _delta * (1 - delta);
-
     if (_callback)
     {
+        float value = _to - _delta * (1 - delta);
         // report back value to caller
         _callback(value);
     }
